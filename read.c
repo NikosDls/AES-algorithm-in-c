@@ -5,12 +5,13 @@
 #define BYTES 16
 
 int main(){
-	unsigned char plainText[BYTES];	// plaintext	
-	unsigned char key[BYTES];		// encryption key
-	unsigned short int sizeCheck;	// temporary saving the length of plaintext and key
+	// last extra byte is for '\0' character
+	unsigned char plainText[BYTES+1];	// plaintext	
+	unsigned char key[BYTES+1];		// encryption key
+	unsigned short int sizeCheck;		// temporary saving the length of plaintext and key
 	
 	unsigned int plainTextHEX[BYTES];	// plaintext in hexadecimal
-	unsigned int keyHEX[BYTES];			// key in hexadecimal
+	unsigned int keyHEX[BYTES];		// key in hexadecimal
 	
 	int i;	// counter for loops
 	
@@ -27,17 +28,6 @@ int main(){
 		sizeCheck = strlen(plainText);
 	}while(sizeCheck != BYTES);	
 	
-	// print the plaintext as a string and in hexadecimal form
-	printf("%s = ", plainText);
-	for(i = 0; i < BYTES; i++){
-		// saving hexadecimal value to new array
-		plainTextHEX[i] = plainText[i];
-		printf("%x  ", plainTextHEX[i]);
-	}
-	
-	// line feed
-	printf("\n\n");
-	
 	// read the key for encryption
 	do{
 		printf("Key: ");
@@ -50,9 +40,17 @@ int main(){
 		// save the length of key
 		sizeCheck = strlen(key);
 	}while(sizeCheck != BYTES);	
-
+	
+	// print the plaintext as a string and in hexadecimal form
+	printf("\n%s = ", plainText);
+	for(i = 0; i < BYTES; i++){
+		// saving hexadecimal value to new array
+		plainTextHEX[i] = plainText[i];
+		printf("%x  ", plainTextHEX[i]);
+	}
+	
 	// print the key as a string and in hexadecimal form
-	printf("%s = ", key);
+	printf("\n%s = ", key);
 	for(i = 0; i < BYTES; i++){
 		// saving hexadecimal value to new array
 		keyHEX[i] = key[i];
