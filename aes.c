@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // substitute box
 // size 16x16
@@ -42,6 +44,9 @@ const unsigned int rsBox[16][16] = {
   	{	0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d	} 
   	};
   	
+  	void get2Bytes(unsigned int, unsigned int *, unsigned int *);
+	unsigned int sub_byte(unsigned int);
+	
 int main(){
 	/* temporary array values to test functions */
 	
@@ -59,5 +64,69 @@ int main(){
 		{	0x74, 0x79, 0x6e, 0x75	}
 		};	
 		
+	unsigned int row, column;	// row and column for sBox lookup	
+	
+	get2Bytes(rsBox[0][3], &row, &column);
+		
 return 0;
+}
+
+void get2Bytes(unsigned int a, unsigned int *row, unsigned int *column){
+	// we need 2 bytes for the hexadecimal value and 1 more for '\0' character
+	unsigned char temp[3];
+	unsigned int r1, r2;
+	
+	// convert the number to string
+	sprintf(temp, "%x", a);
+	
+	// add the '\0' character
+	temp[2] = '\0';
+	
+	printf("%c %c\n\n", temp[0], temp[1]);
+	
+	if(temp[0] >= 48 && temp[0] <= 57){
+		r1 = temp[0] - '0';		
+	}else{
+		switch(temp[0]){
+			case 'a':
+				r1 = 10;			
+				break;
+				
+			case 'b':
+				r1 = 11;
+				break;
+				
+			case 'c':
+				r1 = 12;
+				break;
+				
+			case 'd':
+				r1 = 13;
+				break;
+				
+			case 'e':
+				r1 = 14;
+				break;
+	
+			case 'f':
+				r1 = 15;
+				break;
+		}
+	}
+	printf("%d", r1);
+	
+
+	
+//	r2 = temp[1] - '0';
+//	printf(" %d", r2);
+	
+	//*row = atoi(temp[0]);
+	
+return;
+}
+
+unsigned int sub_byte(unsigned int a){
+	unsigned int sByte;
+	
+return sByte;
 }
