@@ -44,6 +44,7 @@ const unsigned int rsBox[16][16] = {
   	{	0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d	} 
   	};
   	
+  	int hexCharToDec(char);
   	void get2Bytes(unsigned int, unsigned int *, unsigned int *);
 	unsigned int sub_byte(unsigned int);
 	
@@ -64,17 +65,44 @@ int main(){
 		{	0x74, 0x79, 0x6e, 0x75	}
 		};	
 		
-	unsigned int row, column;	// row and column for sBox lookup	
+	unsigned int row, column;	// row and column for lookup	
 	
-	get2Bytes(rsBox[0][3], &row, &column);
-		
+	// finding row and column for lookup
+	get2Bytes(state[0][1], &row, &column);	
+	
+	
 return 0;
+}
+
+int hexCharToDec(char hex){
+	if(hex >= 48 && hex <= 57){	// ascii code for character 1-9
+		return (hex - '0');		// as it happens, the ascii value of the characters 1-9 is greater than the value of '0'.
+	}else{
+		switch(hex){
+			case 'a':		// a hexadecimal is a number 10 to decimal. Similar for the rest
+				return 10;			
+				
+			case 'b':
+				return 11;
+				
+			case 'c':
+				return 12;
+				
+			case 'd':
+				return 13;
+				
+			case 'e':
+				return 14;
+	
+			case 'f':
+				return 15;
+		}
+	}
 }
 
 void get2Bytes(unsigned int a, unsigned int *row, unsigned int *column){
 	// we need 2 bytes for the hexadecimal value and 1 more for '\0' character
 	unsigned char temp[3];
-	unsigned int r1, r2;
 	
 	// convert the number to string
 	sprintf(temp, "%x", a);
@@ -82,46 +110,14 @@ void get2Bytes(unsigned int a, unsigned int *row, unsigned int *column){
 	// add the '\0' character
 	temp[2] = '\0';
 	
-	printf("%c %c\n\n", temp[0], temp[1]);
+	// find the row for the lookup
+	*row = hexCharToDec(temp[0]);
+	printf("(%c)hex = (%d)dec\n", temp[0], *row);
 	
-	if(temp[0] >= 48 && temp[0] <= 57){
-		r1 = temp[0] - '0';		
-	}else{
-		switch(temp[0]){
-			case 'a':
-				r1 = 10;			
-				break;
-				
-			case 'b':
-				r1 = 11;
-				break;
-				
-			case 'c':
-				r1 = 12;
-				break;
-				
-			case 'd':
-				r1 = 13;
-				break;
-				
-			case 'e':
-				r1 = 14;
-				break;
-	
-			case 'f':
-				r1 = 15;
-				break;
-		}
-	}
-	printf("%d", r1);
-	
+	// find the column for the lookup
+	*column = hexCharToDec(temp[1]);
+	printf("(%c)hex = (%d)dec\n", temp[1], *column);
 
-	
-//	r2 = temp[1] - '0';
-//	printf(" %d", r2);
-	
-	//*row = atoi(temp[0]);
-	
 return;
 }
 
