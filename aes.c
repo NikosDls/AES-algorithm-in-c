@@ -44,9 +44,12 @@ const unsigned int rsBox[16][16] = {
   	{	0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d	} 
   	};
   	
-  	int hexCharToDec(char);
+  	void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
+  	unsigned int sub_byte(unsigned int row, unsigned int column);
+  	
+	int hexCharToDec(char);
   	void get2Bytes(unsigned int, unsigned int *, unsigned int *);
-	unsigned int sub_byte(unsigned int);
+  	void printArray(unsigned int [][4]);
 	
 int main(){
 	/* temporary array values to test functions */
@@ -64,19 +67,46 @@ int main(){
 		{	0x61, 0x6d, 0x75, 0x46	},
 		{	0x74, 0x79, 0x6e, 0x75	}
 		};	
-		
+	
+	unsigned int table[4][4];	// temp array to hold results
+	
 	unsigned int row, column;	// row and column for lookup	
 	
-	// finding row and column for lookup
-	get2Bytes(state[0][1], &row, &column);	
+	int i, j;	// counters for loops	
+
+	add_roundkey(table ,state, roundKey);
+	printArray(table);
 	
+	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+			get2Bytes(table[i][j], &row, &column);
+			table[i][j] = sub_byte(row, column);
+		}
+	}
+	printArray(table);
 	
 return 0;
 }
 
+void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[][4]){
+	int i, j;
+
+	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+			result[i][j] = a[i][j] ^ b[i][j];
+		}
+	}
+	
+return;
+}
+
+unsigned int sub_byte(unsigned int row, unsigned int column){
+return sBox[row][column];
+}
+
 int hexCharToDec(char hex){
 	if(hex >= 48 && hex <= 57){	// ascii code for character 1-9
-		return (hex - '0');		// as it happens, the ascii value of the characters 1-9 is greater than the value of '0'.
+		return (hex - '0');		// as it happens, the ascii value of the characters 1-9 is greater than the value of '0'
 	}else{
 		switch(hex){
 			case 'a':		// a hexadecimal is a number 10 to decimal. Similar for the rest
@@ -107,22 +137,45 @@ void get2Bytes(unsigned int a, unsigned int *row, unsigned int *column){
 	// convert the number to string
 	sprintf(temp, "%x", a);
 	
-	// add the '\0' character
-	temp[2] = '\0';
-	
-	// find the row for the lookup
-	*row = hexCharToDec(temp[0]);
-	printf("(%c)hex = (%d)dec\n", temp[0], *row);
-	
-	// find the column for the lookup
-	*column = hexCharToDec(temp[1]);
-	printf("(%c)hex = (%d)dec\n", temp[1], *column);
+	if(strlen(temp) == 1){	// if number is smaller than 15, c saving 1 digit instead 2 digits
+							// e.g. (14)dec = (0x0e)hex | C saving only e instead of 0e 
+		// add the '\0' character to 2nd position, because we need 1 slot for the hexadecimal number
+		temp[1] = '\0';
+		
+		// find the row for the lookup
+		*row = 0;	// row will be 0, because number will have form like this: 0x0..
+		//printf("(%c)hex = (%d)dec\n", temp[0], *row);
+		
+		// find the column for the lookup
+		*column = hexCharToDec(temp[0]);
+		//printf("(%c)hex = (%d)dec\n", temp[1], *column);
+	}else{
+		// add the '\0' character to 3rd position, because we need 2 slots for the hexadecimal number
+		temp[2] = '\0';
+		
+		// find the row for the lookup
+		*row = hexCharToDec(temp[0]);
+		//printf("(%c)hex = (%d)dec\n", temp[0], *row);
+		
+		// find the column for the lookup
+		*column = hexCharToDec(temp[1]);
+		//printf("(%c)hex = (%d)dec\n", temp[1], *column);
+	}
 
 return;
 }
 
-unsigned int sub_byte(unsigned int a){
-	unsigned int sByte;
+void printArray(unsigned int array[][4]){
+	int i, j;
 	
-return sByte;
+	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+			printf("%x\t", array[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+return;
 }
+
+
