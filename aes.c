@@ -43,7 +43,11 @@ const unsigned int rsBox[16][16] = {
   	{	0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61	},
   	{	0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d	} 
   	};
+
+// round constants to find round keys
+const unsigned int rCon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
   	
+  	void keySchedule(unsigned int [][4]);
   	void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
   	unsigned int sub_byte(unsigned int row, unsigned int column);
   	
@@ -74,6 +78,8 @@ int main(){
 	
 	int i, j;	// counters for loops	
 
+	keySchedule(roundKey);
+/*
 	add_roundkey(table ,state, roundKey);
 	printArray(table);
 	
@@ -84,8 +90,28 @@ int main(){
 		}
 	}
 	printArray(table);
-	
+*/	
 return 0;
+}
+
+void keySchedule(unsigned int key[][4]){
+	// we have 10 round, so we need 40 words in array plus 4 for the given key
+	// its word have 4 bytes, so we need 44 * 4
+	unsigned int w[176];
+	
+	int i, j;	// counters for loops
+	
+	// the first round key is the given key
+  	for(i = 0; i < 4; i++){
+  		printf("w[%d] = ", i);
+  		for(j = 0; j < 4; j++){
+  			w[(i * 4) + j] = key[j][i];
+  			printf("%x ", w[(i * 4) + j]);
+		}
+		printf("\t");
+  	}
+		
+return;
 }
 
 void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[][4]){
