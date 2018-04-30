@@ -47,7 +47,7 @@ const unsigned int rsBox[16][16] = {
 // round constants to find round keys
 const unsigned int rCon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
   	
-  	void keySchedule(unsigned int [][4]);
+  	void key_schedule(unsigned int [][4]);
   	void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
   	unsigned int sub_byte(unsigned int row, unsigned int column);
   	
@@ -78,7 +78,7 @@ int main(){
 	
 	int i, j;	// counters for loops	
 
-	keySchedule(roundKey);
+	key_schedule(roundKey);
 /*
 	add_roundkey(table ,state, roundKey);
 	printArray(table);
@@ -94,14 +94,19 @@ int main(){
 return 0;
 }
 
-void keySchedule(unsigned int key[][4]){
+void key_schedule(unsigned int key[][4]){
 	// we have 10 round, so we need 40 words in array plus 4 for the given key
-	// its word have 4 bytes, so we need 44 * 4
+	// its word have 4 bytes, so we need 44 * 4 = 176
 	unsigned int w[176];
 	
-	int i, j;	// counters for loops
+	int i, j, k;	// counters for loops and used as array "pointers"
+	
+	unsigned int row, column;	// row and column for lookup
+	unsigned int temp[4];		// temporary holds the results
 	
 	// the first round key is the given key
+	// we store it to the first 4 words
+	// w0 w1 w2 w3 || w[0] ... w[15]
   	for(i = 0; i < 4; i++){
   		printf("w[%d] = ", i);
   		for(j = 0; j < 4; j++){
@@ -110,7 +115,66 @@ void keySchedule(unsigned int key[][4]){
 		}
 		printf("\t");
   	}
+  	
+	// all other round keys are found from the previous round keys
+	// start for 4, because we calculated the 4 words before
+	// 4 is the block size and 10 is the number of rounds	
+  	for(i = 4; i < 4 * (10 + 1); i++){
+		// k is "pointer" to find wi-1
+	    k = (i - 1) * 4;
+	    // temp = w-1
+	    temp[0] = w[k + 0];
+	    temp[1] = w[k + 1];
+	    temp[2] = w[k + 2];
+	    temp[3] = w[k + 3];
+
+	    if(i % 4 == 0){
+	      	// rot_word function
+	        k = temp[0];
+	        temp[0] = temp[1];
+	        temp[1] = temp[2];
+	        temp[2] = temp[3];
+	        temp[3] = k;
+	
+			// sub_word function
+			for(j = 0; j < 4; j++){
+				get2Bytes(temp[j], &row, &column);
+				temp[j] = sub_byte(row, column);
+			}
+			
+			// temp = sub_word(rot_word(temp)) XOR RCi/4
+	      	temp[0] = temp[0] ^ rCon[i/4];
+	    }
+	    
+		// j is "pointer" to find wi
+	    j = i * 4; 
+	    // k is "pointer" to find wi-4
+		k = (i - 4) * 4;
 		
+		// wi = wi-4 XOR temp 
+    	w[j + 0] = w[k + 0] ^ temp[0];
+    	w[j + 1] = w[k + 1] ^ temp[1];
+    	w[j + 2] = w[k + 2] ^ temp[2];
+    	w[j + 3] = w[k + 3] ^ temp[3];
+    	
+   
+  		//printf("w[%d] = ", i);
+  		for(j = 0; j < 4; j++){
+  		//	printf("%x ", w[i*4 + j]);
+		}
+		//printf("\n");
+	}
+	
+	// print round keys 1 - 10
+	// round key 0(given key) printed before
+	for(i = 4; i < 44; i++){
+  		printf("%s", (i % 4 == 0) ? "\n" : "\t");
+		printf("w[%d] = ", i);
+  		for(j = 0; j < 4; j++){
+  			printf("%x ", w[(i * 4) + j]);
+		}
+  	}
+	
 return;
 }
 
