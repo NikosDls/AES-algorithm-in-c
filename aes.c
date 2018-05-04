@@ -47,9 +47,24 @@ const unsigned int rsBox[16][16] = {
 // round constants to find round keys
 const unsigned int rCon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
   	
+// GF(2^8) multiplication constants to do mix columns
+const unsigned int mCon[16][16] = {
+  	{	0x02, 0x02, 0x01, 0x01	},
+  	{	0x01, 0x02, 0x03, 0x01	},
+  	{	0x01, 0x01, 0x02, 0x03	},
+  	{	0x03, 0x01, 0x01, 0x02	}
+  	};
+  	
+// GF(2^8) multiplication constants to reverse mix columns
+const unsigned int rmCon[16][16] = {
+  	{	0x0e, 0x0b, 0x0d, 0x09	},
+  	{	0x09, 0x0e, 0x0b, 0x0d	},
+  	{	0x0d, 0x09, 0x0e, 0x0b	},
+  	{	0x0b, 0x0d, 0x09, 0x0e	}
+  	};
   	void key_schedule(unsigned int [][4]);
   	void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
-  	unsigned int sub_byte(unsigned int row, unsigned int column);
+  	unsigned int sub_byte(unsigned int, unsigned int);
   	
 	int hexCharToDec(char);
   	void get2Bytes(unsigned int, unsigned int *, unsigned int *);
@@ -78,11 +93,15 @@ int main(){
 	
 	int i, j;	// counters for loops	
 
+	// we calculate all round keys 1-10
 	key_schedule(roundKey);
-/*
+	
+	/*
+	printf("add round key:\n");
 	add_roundkey(table ,state, roundKey);
 	printArray(table);
 	
+	printf("sub bytes:\n");
 	for(i = 0; i < 4; i++){
 		for(j = 0; j < 4; j++){
 			get2Bytes(table[i][j], &row, &column);
@@ -90,7 +109,8 @@ int main(){
 		}
 	}
 	printArray(table);
-*/	
+	*/
+	
 return 0;
 }
 
@@ -156,13 +176,6 @@ void key_schedule(unsigned int key[][4]){
     	w[j + 1] = w[k + 1] ^ temp[1];
     	w[j + 2] = w[k + 2] ^ temp[2];
     	w[j + 3] = w[k + 3] ^ temp[3];
-    	
-   
-  		//printf("w[%d] = ", i);
-  		for(j = 0; j < 4; j++){
-  		//	printf("%x ", w[i*4 + j]);
-		}
-		//printf("\n");
 	}
 	
 	// print round keys 1 - 10
@@ -174,6 +187,7 @@ void key_schedule(unsigned int key[][4]){
   			printf("%x ", w[(i * 4) + j]);
 		}
   	}
+	printf("\n\n\n\n");
 	
 return;
 }
@@ -181,11 +195,9 @@ return;
 void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[][4]){
 	int i, j;
 
-	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
+	for(i = 0; i < 4; i++)
+		for(j = 0; j < 4; j++)
 			result[i][j] = a[i][j] ^ b[i][j];
-		}
-	}
 	
 return;
 }
@@ -265,6 +277,7 @@ void printArray(unsigned int array[][4]){
 		printf("\n");
 	}
 	printf("\n");
+	
 return;
 }
 
