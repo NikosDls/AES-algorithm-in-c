@@ -64,7 +64,7 @@ const unsigned int rmCon[4][4] = {
   	};
 
 // aes functions prototypes	
-void key_schedule(unsigned int [][4]);
+void key_schedule(unsigned int [], unsigned int [][4]);
 void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
 unsigned int sub_byte(unsigned int, unsigned int);
 void shift_rows(unsigned int [][4]);
@@ -72,6 +72,8 @@ void shift_rows(unsigned int [][4]);
 // secondary functions
 int hexCharToDec(char);
 void get2Bytes(unsigned int, unsigned int *, unsigned int *);
+void getRoundKey(unsigned int [], unsigned int [][4], int);
+
 void printArray(unsigned int [][4]);
 	
 int main(){
@@ -90,6 +92,10 @@ int main(){
 		{	0x74, 0x79, 0x6e, 0x75	}
 		};	
 	
+	// we have 10 round, so we need 40 words in array plus 4 for the given key
+	// its word have 4 bytes, so we need 44 * 4 = 176
+	unsigned int w[176];
+	
 	unsigned int table[4][4];	// temp array to hold results
 	
 	unsigned int row, column;	// row and column for lookup	
@@ -97,9 +103,14 @@ int main(){
 	int i, j;	// counters for loops	
 
 	// we calculate all round keys 1-10
-	key_schedule(roundKey);
-	
+	key_schedule(w, roundKey);
+  	
 	/*
+	// get round key test
+	printf("get round key:\n");
+	for(i = 0; i < 11; i++)
+		getRoundKey(w, roundKey, i);
+	
 	// shift row test
 	printf("shift rows:\n");
 	printArray(state);
@@ -124,11 +135,7 @@ int main(){
 return 0;
 }
 
-void key_schedule(unsigned int key[][4]){
-	// we have 10 round, so we need 40 words in array plus 4 for the given key
-	// its word have 4 bytes, so we need 44 * 4 = 176
-	unsigned int w[176];
-	
+void key_schedule(unsigned int w[], unsigned int key[][4]){
 	int i, j, k;	// counters for loops and used as array "pointers"
 	
 	unsigned int row, column;	// row and column for lookup
@@ -149,7 +156,7 @@ void key_schedule(unsigned int key[][4]){
 	// all other round keys are found from the previous round keys
 	// start for 4, because we calculated the 4 words before
 	// 4 is the block size and 10 is the number of rounds	
-  	for(i = 4; i < 4 * (10 + 1); i++){
+  	for(i = 4; i < (4 * (10 + 1)); i++){
 		// k is "pointer" to find wi-1
 	    k = (i - 1) * 4;
 	    // temp = w-1
@@ -312,6 +319,26 @@ void get2Bytes(unsigned int a, unsigned int *row, unsigned int *column){
 		//printf("(%c)hex = (%d)dec\n", temp[1], *column);
 	}
 
+return;
+}
+
+void getRoundKey(unsigned int w[], unsigned int roundKey[][4], int round){
+	int i, j;
+
+	printf("Round key %d: ", round);
+	for(i = (round * 4); i < ((round * 4) + 4); i++){
+  		for(j = 0; j < 4; j++){
+  			if(round == 0){
+				roundKey[j][i] = w[(i * 4) + j];
+				printf("%x ", roundKey[j][i]);
+  			}else{
+				roundKey[j][i - (round * 4)] = w[(i * 4) + j];
+				printf("%x ", roundKey[j][i - (round * 4)]);
+			}	
+		}
+  	}
+  	printf("\n");
+  	
 return;
 }
 
