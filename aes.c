@@ -48,7 +48,7 @@ const unsigned int rsBox[16][16] = {
 const unsigned int rCon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
   	
 // GF(2^8) multiplication constants to do mix columns
-const unsigned int mCon[16][16] = {
+const unsigned int mCon[4][4] = {
   	{	0x02, 0x02, 0x01, 0x01	},
   	{	0x01, 0x02, 0x03, 0x01	},
   	{	0x01, 0x01, 0x02, 0x03	},
@@ -56,30 +56,33 @@ const unsigned int mCon[16][16] = {
   	};
   	
 // GF(2^8) multiplication constants to reverse mix columns
-const unsigned int rmCon[16][16] = {
+const unsigned int rmCon[4][4] = {
   	{	0x0e, 0x0b, 0x0d, 0x09	},
   	{	0x09, 0x0e, 0x0b, 0x0d	},
   	{	0x0d, 0x09, 0x0e, 0x0b	},
   	{	0x0b, 0x0d, 0x09, 0x0e	}
   	};
-  	void key_schedule(unsigned int [][4]);
-  	void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
-  	unsigned int sub_byte(unsigned int, unsigned int);
+
+// aes functions prototypes	
+void key_schedule(unsigned int [][4]);
+void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
+unsigned int sub_byte(unsigned int, unsigned int);
+void shift_rows(unsigned int [][4]);
   	
-	int hexCharToDec(char);
-  	void get2Bytes(unsigned int, unsigned int *, unsigned int *);
-  	void printArray(unsigned int [][4]);
+// secondary functions
+int hexCharToDec(char);
+void get2Bytes(unsigned int, unsigned int *, unsigned int *);
+void printArray(unsigned int [][4]);
 	
 int main(){
 	/* temporary array values to test functions */
-	
 	unsigned int state[4][4] = {	// state array
 		{	0x54, 0x4f,	0x4e, 0x20	},
 		{	0x77, 0x6e, 0x69, 0x54	},
 		{	0x6f, 0x65, 0x6e, 0x77	},
 		{	0x20, 0x20, 0x65, 0x6f	}
 		};
-		
+	
 	unsigned int roundKey[4][4] = {	// round key array
 		{	0x54, 0x73,	0x20, 0x67	},
 		{	0x68, 0x20, 0x4b, 0x20	},
@@ -97,10 +100,18 @@ int main(){
 	key_schedule(roundKey);
 	
 	/*
+	// shift row test
+	printf("shift rows:\n");
+	printArray(state);
+	shift_rows(state);
+	printArray(state);
+	
+	// add round key test
 	printf("add round key:\n");
 	add_roundkey(table ,state, roundKey);
 	printArray(table);
 	
+	// sub bytes test
 	printf("sub bytes:\n");
 	for(i = 0; i < 4; i++){
 		for(j = 0; j < 4; j++){
@@ -110,7 +121,6 @@ int main(){
 	}
 	printArray(table);
 	*/
-	
 return 0;
 }
 
@@ -192,6 +202,7 @@ void key_schedule(unsigned int key[][4]){
 return;
 }
 
+// this function do result = a XOR b
 void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[][4]){
 	int i, j;
 
@@ -202,8 +213,45 @@ void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[
 return;
 }
 
+// look up in sBox table and return the new value
 unsigned int sub_byte(unsigned int row, unsigned int column){
 return sBox[row][column];
+}
+
+// this function shifts the rows to the left
+// each row is shifted differently
+void shift_rows(unsigned int state[][4]){
+	unsigned int temp, temp1;	// temporary variables to do the shifts
+	
+	// first row is not shifted
+	
+	// second row is shifted left 1 time  
+	temp = state[1][0];
+	state[1][0] = state[1][1]; 
+	state[1][1] = state[1][2];
+	state[1][2] = state[1][3];
+	state[1][3] = temp;
+	
+	// third row is shifted left 2 times 
+	temp = state[2][0];
+	state[2][0] = state[2][2];
+	state[2][2] = temp;
+	
+	temp = state[2][1];
+	state[2][1] = state[2][3];
+	state[2][3] = temp;
+	
+	// fourth row is shifted left 3 times
+	temp = state[3][0];
+	state[3][0] = state[3][3];
+	
+	temp1 = state[3][1];
+	state[3][1] = temp;
+	
+	state[3][3] = state[3][2];
+	state[3][2] = temp1;
+
+return;
 }
 
 int hexCharToDec(char hex){
