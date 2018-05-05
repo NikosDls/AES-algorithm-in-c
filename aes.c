@@ -49,7 +49,7 @@ const unsigned int rCon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 
   	
 // GF(2^8) multiplication constants to do mix columns
 const unsigned int mCon[4][4] = {
-  	{	0x02, 0x02, 0x01, 0x01	},
+  	{	0x02, 0x03, 0x01, 0x01	},
   	{	0x01, 0x02, 0x03, 0x01	},
   	{	0x01, 0x01, 0x02, 0x03	},
   	{	0x03, 0x01, 0x01, 0x02	}
@@ -68,16 +68,19 @@ void key_schedule(unsigned int [], unsigned int [][4]);
 void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
 unsigned int sub_byte(unsigned int, unsigned int);
 void shift_rows(unsigned int [][4]);
-  	
+void mix_columns(unsigned int [][4], unsigned int [][4]);
+
 // secondary functions
 int hexCharToDec(char);
 void get2Bytes(unsigned int, unsigned int *, unsigned int *);
 void getRoundKey(unsigned int [], unsigned int [][4], int);
+unsigned int gfMul(unsigned int, unsigned int);
 
 void printArray(unsigned int [][4]);
 	
 int main(){
 	/* temporary array values to test functions */
+	
 	unsigned int state[4][4] = {	// state array
 		{	0x54, 0x4f,	0x4e, 0x20	},
 		{	0x77, 0x6e, 0x69, 0x54	},
@@ -100,12 +103,17 @@ int main(){
 	
 	unsigned int row, column;	// row and column for lookup	
 	
-	int i, j;	// counters for loops	
+	int i, j;	// counters for the loops	
 
 	// we calculate all round keys 1-10
 	key_schedule(w, roundKey);
   	
 	/*
+  	// mix columns test
+	printf("mix columns:\n");
+	mix_columns(table, state);
+	printArray(table);
+	
 	// get round key test
 	printf("get round key:\n");
 	for(i = 0; i < 11; i++)
@@ -135,11 +143,11 @@ int main(){
 return 0;
 }
 
+// this function produces all round keys
 void key_schedule(unsigned int w[], unsigned int key[][4]){
-	int i, j, k;	// counters for loops and used as array "pointers"
-	
 	unsigned int row, column;	// row and column for lookup
 	unsigned int temp[4];		// temporary holds the results
+	int i, j, k;				// counters for the loops and used as array "pointers"
 	
 	// the first round key is the given key
 	// we store it to the first 4 words
@@ -211,7 +219,7 @@ return;
 
 // this function do result = a XOR b
 void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[][4]){
-	int i, j;
+	int i, j;	// counters for the loops
 
 	for(i = 0; i < 4; i++)
 		for(j = 0; j < 4; j++)
@@ -261,6 +269,28 @@ void shift_rows(unsigned int state[][4]){
 return;
 }
 
+// this function mix the columns
+// state column multiplied with mCon row
+// instead of normal multiplication here we do GF(2^8) multiply
+// and instead of addition here we do XOR operation
+void mix_columns(unsigned int result[][4], unsigned int state[][4]){
+	unsigned int sum = 0;	// we hold the sum here
+	int i, j, k;			// counters for the loops
+	
+    for(i = 0; i < 4; i++){
+        for(j = 0; j < 4; j++){
+            for(k = 0; k < 4; k++){
+            	sum ^= gfMul(state[k][i], mCon[j][k]);
+            }
+            result[j][i] = sum;
+            sum = 0;
+        }
+    }
+		
+return;
+}
+
+// this function converts hexadecimal character to integer
 int hexCharToDec(char hex){
 	if(hex >= 48 && hex <= 57){	// ascii code for character 1-9
 		return (hex - '0');		// as it happens, the ascii value of the characters 1-9 is greater than the value of '0'
@@ -287,6 +317,8 @@ int hexCharToDec(char hex){
 	}
 }
 
+// this function returns the integer value of the 2 bytes hex input
+// input: xy || row = x	and column = y 
 void get2Bytes(unsigned int a, unsigned int *row, unsigned int *column){
 	// we need 2 bytes for the hexadecimal value and 1 more for '\0' character
 	unsigned char temp[3];
@@ -322,8 +354,9 @@ void get2Bytes(unsigned int a, unsigned int *row, unsigned int *column){
 return;
 }
 
+// this function return the 16bytes round key
 void getRoundKey(unsigned int w[], unsigned int roundKey[][4], int round){
-	int i, j;
+	int i, j;	// counters for the loops
 
 	printf("Round key %d: ", round);
 	for(i = (round * 4); i < ((round * 4) + 4); i++){
@@ -342,8 +375,39 @@ void getRoundKey(unsigned int w[], unsigned int roundKey[][4], int round){
 return;
 }
 
+// multiply two numbers in the GF(2^8)
+// polynomial: x^8 + x^4 + x^3 + x + 1
+// binary: 00011011  || hex: 0x1b
+unsigned int gfMul(unsigned int a, unsigned int b){
+    unsigned int r = 0;			// result
+    unsigned int hi_bit_set;	// high bit
+	int i;						// counter for the loop
+	
+    for(i = 0; i < 8; i++) {
+        if(b & 1) 
+        	r ^= a;
+        hi_bit_set = (a & 0x80);
+        a <<= 1;
+        
+		if(hi_bit_set) 
+            a ^= 0x1b;	// x^8 + x^4 + x^3 + x + 1
+        b >>= 1;
+    }
+	
+	// if result legnth is more than 8 bits
+	if(r > 255 && r < 512)
+		return r - 256;
+		
+	if(r > 511)
+		return r - 512;
+	
+	// if result is max 8 bits
+	return r;
+}
+
+// this function prints the array
 void printArray(unsigned int array[][4]){
-	int i, j;
+	int i, j;	// counters for the loops
 	
 	for(i = 0; i < 4; i++){
 		for(j = 0; j < 4; j++){
@@ -355,5 +419,3 @@ void printArray(unsigned int array[][4]){
 	
 return;
 }
-
-
