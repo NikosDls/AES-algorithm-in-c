@@ -66,10 +66,16 @@ const unsigned int rmCon[4][4] = {
 // aes functions prototypes	
 void key_schedule(unsigned int [], unsigned int [][4]);
 void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
+
 unsigned int sub_byte(unsigned int, unsigned int);
 void shift_rows(unsigned int [][4]);
 void mix_columns(unsigned int [][4], unsigned int [][4]);
 void encryption(unsigned int [][4], unsigned int []);
+
+unsigned int inv_sub_byte(unsigned int, unsigned int);
+void inv_shift_rows(unsigned int [][4]);
+void inv_mix_columns(unsigned int [][4], unsigned int [][4]);
+void decryption(unsigned int [][4], unsigned int []);
 
 // secondary functions
 int hexCharToDec(char);
@@ -100,7 +106,7 @@ int main(){
 	unsigned int w[176];		// all round keys	
 	
 	/*****************************/
-
+	
 	// print the plaintext and key
 	printf("Plaintext:\n");
 	printArray(state);
@@ -113,9 +119,78 @@ int main(){
 	
 	encryption(state, w);
 	
-	//printf("%s", cipherText);
+	// print the result (ciphertext)
+	printf("\nCiphertext:\n");
+	printArray(state);
+	
+	printf("\n\n--------------------\n\n\n");
+	
+	decryption(state, w);
+	
+	// print the result (plaintext)
+	printf("\nPlaintext:\n");
+	printArray(state);
 	
 	/*
+	int i, j;
+	int row, column;
+	unsigned int table[4][4];
+			
+	printArray(state);
+	
+	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+				get2Bytes(state[i][j], &row, &column);
+				state[i][j] = sub_byte(row, column);
+			}
+	 	}
+
+	printArray(state);
+	
+	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+				get2Bytes(state[i][j], &row, &column);
+				state[i][j] = inv_sub_byte(row, column);
+			}
+	 	}
+	
+	printArray(state);
+	
+	
+	printArray(state);
+	
+	shift_rows(state);
+	
+	printArray(state);
+	
+	inv_shift_rows(state);
+	
+	printArray(state);
+	
+	
+	printArray(state);
+	
+	mix_columns(table, state);
+	
+	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+				state[i][j] = table[i][j];
+			}
+	 	}
+	
+	printArray(state);
+	
+	inv_mix_columns(table, state);
+		for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+				state[i][j] = table[i][j];
+			}
+	 	}
+	printArray(state);	
+	
+	
+	//printf("%s", cipherText);
+	
   	// mix columns test
 	printf("mix columns:\n");
 	mix_columns(table, state);
@@ -159,13 +234,14 @@ void key_schedule(unsigned int w[], unsigned int key[][4]){
 	// the first round key is the given key
 	// we store it to the first 4 words
 	// w0 w1 w2 w3 || w[0] ... w[15]
+	printf("Round keys:\n");
   	for(i = 0; i < 4; i++){
-  		//printf("w[%d] = ", i);
+  		printf("w[%d] = ", i);
   		for(j = 0; j < 4; j++){
   			w[(i * 4) + j] = key[j][i];
-  			//printf("%x ", w[(i * 4) + j]);
+  			printf("%x ", w[(i * 4) + j]);
 		}
-		//printf("\t");
+		printf("\t");
   	}
   	
 	// all other round keys are found from the previous round keys
@@ -209,7 +285,7 @@ void key_schedule(unsigned int w[], unsigned int key[][4]){
     	w[j + 2] = w[k + 2] ^ temp[2];
     	w[j + 3] = w[k + 3] ^ temp[3];
 	}
-/*
+
 	// print round keys 1 - 10
 	// round key 0(given key) printed before
 	for(i = 4; i < 44; i++){
@@ -220,7 +296,7 @@ void key_schedule(unsigned int w[], unsigned int key[][4]){
 		}
   	}
 	printf("\n\n");
-*/	
+
 return;
 }
 
@@ -243,7 +319,7 @@ return sBox[row][column];
 // this function shifts the rows to the left
 // each row is shifted differently
 void shift_rows(unsigned int state[][4]){
-	unsigned int temp, temp1;	// temporary variables to do the shifts
+	unsigned int temp;	// temporary variables to do the shifts
 	
 	// first row is not shifted
 	
@@ -266,12 +342,9 @@ void shift_rows(unsigned int state[][4]){
 	// fourth row is shifted left 3 times
 	temp = state[3][0];
 	state[3][0] = state[3][3];
-	
-	temp1 = state[3][1];
-	state[3][1] = temp;
-	
 	state[3][3] = state[3][2];
-	state[3][2] = temp1;
+	state[3][2] = state[3][1];
+	state[3][1] = temp;
 
 return;
 }
@@ -297,18 +370,22 @@ void mix_columns(unsigned int result[][4], unsigned int state[][4]){
 return;
 }
 
+// this function encrypts the plaintext 
 void encryption(unsigned int state[][4], unsigned int w[]){
 	unsigned int roundKey[4][4];	// round key
-	unsigned int table[4][4];	// temp array to hold results
+	unsigned int table[4][4];		// temp array to hold results
 	
 	unsigned int row, column;	// row and column for sub_bytes lookup
-	int i, j, k;		// counters for the loops
+	int i, j, k;				// counters for the loops
 		
 	// round 0
   	// 1. add_roundkey
-  	getRoundKey(w, roundKey, 0);			// get round key 0
-  	add_roundkey(state, state, roundKey);	// add round key to state
+  	getRoundKey(w, roundKey, 0);
+  	add_roundkey(state, state, roundKey);
   	
+	printf("add_roundkey:\n");  
+	printArray(state);
+	
   	// round 1-9
   	// 1. sub_bytes
   	// 2. shift_rows
@@ -321,13 +398,24 @@ void encryption(unsigned int state[][4], unsigned int w[]){
 				state[i][j] = sub_byte(row, column);
 			}
 		}
+		printf("sub_bytes:\n");  
+		printArray(state);
 		
 		shift_rows(state);
 		
+		printf("shift_rows:\n");  
+		printArray(state);
+		
 		mix_columns(table, state);
-
+		
+		printf("mix_columns:\n");  
+		printArray(table);
+		
 		getRoundKey(w, roundKey, k);
     	add_roundkey(state, table, roundKey);
+    	
+    	printf("add_roundkey:\n");  
+    	printArray(state);
 	}
 	
 	// round 10
@@ -340,15 +428,194 @@ void encryption(unsigned int state[][4], unsigned int w[]){
 			state[i][j] = sub_byte(row, column);
 		}
 	}
-		
+	
+	printf("sub_bytes:\n");  
+	printArray(state);
+	
 	shift_rows(state);
-		
+	
+	printf("shift_rows:\n");  
+	printArray(state);
+	
 	getRoundKey(w, roundKey, 10);
     add_roundkey(state, state, roundKey);
 	
-	// print the result (ciphertext)
-	printf("\nCiphertext:\n");
+	printf("add_roundkey:\n");  
 	printArray(state);
+	
+return;
+}
+
+// this function lookup in rsBox table and return the new value
+unsigned int inv_sub_byte(unsigned int row, unsigned int column){
+return rsBox[row][column];
+}
+
+// this function shifts the rows to the right
+// each row is shifted differently
+void inv_shift_rows(unsigned int state[][4]){
+	unsigned int temp;	// temporary variable to do the shifts
+	
+	// first row is not shifted
+	
+	// second row is shifted right 1 time  
+	temp = state[1][3];
+	state[1][3] = state[1][2]; 
+	state[1][2] = state[1][1];
+	state[1][1] = state[1][0];
+	state[1][0] = temp;
+	
+	// third row is shifted right 2 times 
+	temp = state[2][0];
+	state[2][0] = state[2][2];
+	state[2][2] = temp;
+	
+	temp = state[2][1];
+	state[2][1] = state[2][3];
+	state[2][3] = temp;
+	
+	// fourth row is shifted right 3 times
+	temp = state[3][0];
+	state[3][0] = state[3][1];
+	state[3][1] = state[3][2];
+	state[3][2] = state[3][3];
+	state[3][3] = temp;
+
+return;
+}
+
+void inv_mix_columns(unsigned int result[][4], unsigned int state[][4]){
+	unsigned int sum = 0;	// we hold the sum here
+	int i, j, k;			// counters for the loops
+	unsigned int temp;		// temporary variable to hold the results
+	
+    for(i = 0; i < 4; i++){
+        for(j = 0; j < 4; j++){
+            for(k = 0; k < 4; k++){
+            	switch(rmCon[j][k]){
+            		// x = state[k][i]
+            		case 9:
+            			temp = gfMul(state[k][i], 2);	// x * 2
+            			temp = gfMul(temp, 2);			// (x * 2) * 2
+            			temp = gfMul(temp ,2);			// ((x * 2) * 2) * 2
+            			temp ^= state[k][i];			// (((x * 2) * 2) * 2) + x = x * 9
+						break;	
+            			
+            		case 11:
+            			temp = gfMul(state[k][i], 2);	// x * 2
+            			temp = gfMul(temp, 2);			// (x * 2) * 2
+            			temp ^= state[k][i];			// ((x * 2) * 2) + x
+            			temp = gfMul(temp, 2);			// (((x * 2) * 2) + x) * 2
+            			temp ^= state[k][i];			// ((((x * 2) * 2) + x) * 2) + x = x * 11
+            			break;
+            			
+            		case 13:
+            			temp = gfMul(state[k][i], 2);	// x * 2
+            			temp ^= state[k][i];			// (x * 2) + x
+            			temp = gfMul(temp, 2);			// ((x * 2) + x) * 2
+            			temp = gfMul(temp, 2);			// (((x * 2) + x) * 2) * 2
+            			temp ^= state[k][i];			// ((((x * 2) + x) * 2) * 2) + x = x * 11
+            			break;
+            			
+            		case 14:
+            			temp = gfMul(state[k][i], 2);	// x * 2
+            			temp ^= state[k][i];			// (x * 2) + x
+            			temp = gfMul(temp, 2);			// ((x * 2) + x) * 2
+            			temp ^= state[k][i];			// (((x * 2) + x) * 2) + x
+            			temp = gfMul(temp, 2);			// ((((x * 2) + x) * 2) + x) * 2 = x * 14
+            			break;
+				}
+            	sum ^= temp;
+            }
+            result[j][i] = sum;
+            sum = 0;
+        }
+    }
+		
+return;	
+}
+
+// this function encrypts the plaintext 
+void decryption(unsigned int state[][4], unsigned int w[]){
+	unsigned int roundKey[4][4];	// round key
+	unsigned int table[4][4];		// temp array to hold results
+	
+	unsigned int row, column;	// row and column for sub_bytes lookup
+	int i, j, k, i1, i2;		// counters for the loops
+	
+	// round 0
+	// 1. add_roundkey
+	// 2. inv_shift_rows
+	// 3. inv_sub_bytes
+	getRoundKey(w, roundKey, 10);
+    add_roundkey(state, state, roundKey);
+	
+	printf("\nadd_roundkey:\n");  
+	printArray(state);
+	
+	inv_shift_rows(state);
+	
+	printf("inv_shift_rows:\n");  
+	printArray(state);
+	
+  	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+			get2Bytes(state[i][j], &row, &column);
+			state[i][j] = inv_sub_byte(row, column);
+		}
+	}
+	
+	printf("inv_sub_bytes:\n");  
+	printArray(state);
+	
+	// round 1-9
+  	// 1. add_roundkey
+  	// 2. inv_mix_columns
+  	// 3. inv_shift_rows
+  	// 4. inv_sub_bytes
+  	for(k = 9; k > 0; k--){
+  		getRoundKey(w, roundKey, k);
+    	add_roundkey(state, state, roundKey);
+    	
+    	printf("add_roundkey:\n");  
+    	printArray(state);
+    	
+    	inv_mix_columns(table, state);
+		
+		printf("inv_mix_columns:\n");  
+		printArray(table);
+    	
+    	for(i1 = 0; i1 < 4; i1++){
+    		for(i2 = 0; i2 < 4; i2++){
+    			state[i1][i2] = table[i1][i2];
+			}
+		}
+    	
+    	inv_shift_rows(state);
+		
+		printf("inv_shift_rows:\n");  
+		printArray(state);
+    	
+		for(i = 0; i < 4; i++){
+			for(j = 0; j < 4; j++){
+				get2Bytes(state[i][j], &row, &column);
+				state[i][j] = inv_sub_byte(row, column);
+			}
+		}
+		
+		printf("inv_sub_bytes:\n");  
+		printArray(state);	
+	}
+	
+	// round 10
+  	// 1. add_roundkey
+  	getRoundKey(w, roundKey, 0);
+  	add_roundkey(state, state, roundKey);
+  	
+	printf("add_roundkey:\n");  
+	printArray(state);
+
+return;
 }
 
 // this function converts hexadecimal character to integer
