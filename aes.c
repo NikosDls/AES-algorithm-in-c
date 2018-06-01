@@ -69,6 +69,7 @@ void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
 unsigned int sub_byte(unsigned int, unsigned int);
 void shift_rows(unsigned int [][4]);
 void mix_columns(unsigned int [][4], unsigned int [][4]);
+void encryption(unsigned int [][4], unsigned int []);
 
 // secondary functions
 int hexCharToDec(char);
@@ -80,15 +81,14 @@ void printArray(unsigned int [][4]);
 	
 int main(){
 	/* temporary array values to test functions */
-	
-	unsigned int state[4][4] = {	// state array
+	unsigned int state[4][4] = {	// state array - input
 		{	0x54, 0x4f,	0x4e, 0x20	},
 		{	0x77, 0x6e, 0x69, 0x54	},
 		{	0x6f, 0x65, 0x6e, 0x77	},
 		{	0x20, 0x20, 0x65, 0x6f	}
 		};
 	
-	unsigned int roundKey[4][4] = {	// round key array
+	unsigned int key[4][4] = {		// encryption key
 		{	0x54, 0x73,	0x20, 0x67	},
 		{	0x68, 0x20, 0x4b, 0x20	},
 		{	0x61, 0x6d, 0x75, 0x46	},
@@ -96,18 +96,25 @@ int main(){
 		};	
 	
 	// we have 10 round, so we need 40 words in array plus 4 for the given key
-	// its word have 4 bytes, so we need 44 * 4 = 176
-	unsigned int w[176];
+	// each word have 4 bytes, so we need 44 * 4 = 176
+	unsigned int w[176];		// all round keys	
 	
-	unsigned int table[4][4];	// temp array to hold results
+	/*****************************/
+
+	// print the plaintext and key
+	printf("Plaintext:\n");
+	printArray(state);
 	
-	unsigned int row, column;	// row and column for lookup	
-	
-	int i, j;	// counters for the loops	
+	printf("Key:\n");
+	printArray(key);
 
 	// we calculate all round keys 1-10
-	key_schedule(w, roundKey);
-  	
+	key_schedule(w, key);
+	
+	encryption(state, w);
+	
+	//printf("%s", cipherText);
+	
 	/*
   	// mix columns test
 	printf("mix columns:\n");
@@ -153,12 +160,12 @@ void key_schedule(unsigned int w[], unsigned int key[][4]){
 	// we store it to the first 4 words
 	// w0 w1 w2 w3 || w[0] ... w[15]
   	for(i = 0; i < 4; i++){
-  		printf("w[%d] = ", i);
+  		//printf("w[%d] = ", i);
   		for(j = 0; j < 4; j++){
   			w[(i * 4) + j] = key[j][i];
-  			printf("%x ", w[(i * 4) + j]);
+  			//printf("%x ", w[(i * 4) + j]);
 		}
-		printf("\t");
+		//printf("\t");
   	}
   	
 	// all other round keys are found from the previous round keys
@@ -202,7 +209,7 @@ void key_schedule(unsigned int w[], unsigned int key[][4]){
     	w[j + 2] = w[k + 2] ^ temp[2];
     	w[j + 3] = w[k + 3] ^ temp[3];
 	}
-	
+/*
 	// print round keys 1 - 10
 	// round key 0(given key) printed before
 	for(i = 4; i < 44; i++){
@@ -212,8 +219,8 @@ void key_schedule(unsigned int w[], unsigned int key[][4]){
   			printf("%x ", w[(i * 4) + j]);
 		}
   	}
-	printf("\n\n\n\n");
-	
+	printf("\n\n");
+*/	
 return;
 }
 
@@ -228,7 +235,7 @@ void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[
 return;
 }
 
-// look up in sBox table and return the new value
+// this function lookup in sBox table and return the new value
 unsigned int sub_byte(unsigned int row, unsigned int column){
 return sBox[row][column];
 }
@@ -290,13 +297,67 @@ void mix_columns(unsigned int result[][4], unsigned int state[][4]){
 return;
 }
 
+void encryption(unsigned int state[][4], unsigned int w[]){
+	unsigned int roundKey[4][4];	// round key
+	unsigned int table[4][4];	// temp array to hold results
+	
+	unsigned int row, column;	// row and column for sub_bytes lookup
+	int i, j, k;		// counters for the loops
+		
+	// round 0
+  	// 1. add_roundkey
+  	getRoundKey(w, roundKey, 0);			// get round key 0
+  	add_roundkey(state, state, roundKey);	// add round key to state
+  	
+  	// round 1-9
+  	// 1. sub_bytes
+  	// 2. shift_rows
+  	// 3. mix_columns
+  	// 4. add_roundkey
+  	for(k = 1; k < 10; k++){
+		for(i = 0; i < 4; i++){
+			for(j = 0; j < 4; j++){
+				get2Bytes(state[i][j], &row, &column);
+				state[i][j] = sub_byte(row, column);
+			}
+		}
+		
+		shift_rows(state);
+		
+		mix_columns(table, state);
+
+		getRoundKey(w, roundKey, k);
+    	add_roundkey(state, table, roundKey);
+	}
+	
+	// round 10
+	// 1. sub_bytes
+	// 2. shift_rows
+	// 3. add_roundkey
+  	for(i = 0; i < 4; i++){
+		for(j = 0; j < 4; j++){
+			get2Bytes(state[i][j], &row, &column);
+			state[i][j] = sub_byte(row, column);
+		}
+	}
+		
+	shift_rows(state);
+		
+	getRoundKey(w, roundKey, 10);
+    add_roundkey(state, state, roundKey);
+	
+	// print the result (ciphertext)
+	printf("\nCiphertext:\n");
+	printArray(state);
+}
+
 // this function converts hexadecimal character to integer
 int hexCharToDec(char hex){
 	if(hex >= 48 && hex <= 57){	// ascii code for character 1-9
 		return (hex - '0');		// as it happens, the ascii value of the characters 1-9 is greater than the value of '0'
 	}else{
 		switch(hex){
-			case 'a':		// a hexadecimal is a number 10 to decimal. Similar for the rest
+			case 'a':			// a hexadecimal is a number 10 to decimal. Similar for the rest
 				return 10;			
 				
 			case 'b':
@@ -358,19 +419,19 @@ return;
 void getRoundKey(unsigned int w[], unsigned int roundKey[][4], int round){
 	int i, j;	// counters for the loops
 
-	printf("Round key %d: ", round);
+	//printf("Round key %d: ", round);
 	for(i = (round * 4); i < ((round * 4) + 4); i++){
   		for(j = 0; j < 4; j++){
-  			if(round == 0){
-				roundKey[j][i] = w[(i * 4) + j];
-				printf("%x ", roundKey[j][i]);
-  			}else{
+  		//	if(round == 0){
+		//		roundKey[j][i] = w[(i * 4) + j];
+				//printf("%x ", roundKey[j][i]);
+  		//	}else{
 				roundKey[j][i - (round * 4)] = w[(i * 4) + j];
-				printf("%x ", roundKey[j][i - (round * 4)]);
-			}	
+				//printf("%x ", roundKey[j][i - (round * 4)]);
+		//	}	
 		}
   	}
-  	printf("\n");
+  	//printf("\n");
   	
 return;
 }
@@ -380,7 +441,7 @@ return;
 // binary: 00011011  || hex: 0x1b
 unsigned int gfMul(unsigned int a, unsigned int b){
     unsigned int r = 0;			// result
-    unsigned int hi_bit_set;	// high bit
+    unsigned int hi_bit_set;	// high bit (leftmost)
 	int i;						// counter for the loop
 	
     for(i = 0; i < 8; i++) {
@@ -393,7 +454,7 @@ unsigned int gfMul(unsigned int a, unsigned int b){
             a ^= 0x1b;	// x^8 + x^4 + x^3 + x + 1
         b >>= 1;
     }
-	
+    
 	// if result legnth is more than 8 bits
 	if(r > 255 && r < 512)
 		return r - 256;
