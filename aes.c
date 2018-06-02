@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+// block size is 128 bits = 16 bytes
+// so we need 4x4 blocks
+#define BLOCK_SIZE 4
+
 // substitute box
 // size 16x16
 const unsigned int sBox[16][16] = {
@@ -48,7 +52,7 @@ const unsigned int rsBox[16][16] = {
 const unsigned int rCon[11] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36 };
   	
 // GF(2^8) multiplication constants to do mix columns
-const unsigned int mCon[4][4] = {
+const unsigned int mCon[BLOCK_SIZE][BLOCK_SIZE] = {
   	{	0x02, 0x03, 0x01, 0x01	},
   	{	0x01, 0x02, 0x03, 0x01	},
   	{	0x01, 0x01, 0x02, 0x03	},
@@ -56,7 +60,7 @@ const unsigned int mCon[4][4] = {
   	};
   	
 // GF(2^8) multiplication constants to reverse mix columns
-const unsigned int rmCon[4][4] = {
+const unsigned int rmCon[BLOCK_SIZE][BLOCK_SIZE] = {
   	{	0x0e, 0x0b, 0x0d, 0x09	},
   	{	0x09, 0x0e, 0x0b, 0x0d	},
   	{	0x0d, 0x09, 0x0e, 0x0b	},
@@ -64,73 +68,31 @@ const unsigned int rmCon[4][4] = {
   	};
 
 // aes functions prototypes	
-void key_schedule(unsigned int [], unsigned int [][4]);
-void add_roundkey(unsigned int [][4], unsigned int [][4], unsigned int [][4]);
+void key_schedule(unsigned int [], unsigned int [][BLOCK_SIZE]);
+void add_roundkey(unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE]);
 
 unsigned int sub_byte(unsigned int, unsigned int);
-void shift_rows(unsigned int [][4]);
-void mix_columns(unsigned int [][4], unsigned int [][4]);
-void encryption(unsigned int [][4], unsigned int []);
+void shift_rows(unsigned int [][BLOCK_SIZE]);
+void mix_columns(unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE]);
+void encryption(unsigned int [][BLOCK_SIZE], unsigned int []);
 
 unsigned int inv_sub_byte(unsigned int, unsigned int);
-void inv_shift_rows(unsigned int [][4]);
-void inv_mix_columns(unsigned int [][4], unsigned int [][4]);
-void decryption(unsigned int [][4], unsigned int []);
+void inv_shift_rows(unsigned int [][BLOCK_SIZE]);
+void inv_mix_columns(unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE]);
+void decryption(unsigned int [][BLOCK_SIZE], unsigned int []);
 
 // secondary functions
 int hexCharToDec(char);
 void get2Bytes(unsigned int, unsigned int *, unsigned int *);
-void getRoundKey(unsigned int [], unsigned int [][4], int);
+void getRoundKey(unsigned int [], unsigned int [][BLOCK_SIZE], int);
 unsigned int gfMul(unsigned int, unsigned int);
 
-void printArray(unsigned int [][4]);
-	
-int main(){
-	/* temporary array values to test functions */
-	unsigned int state[4][4] = {	// state array - input
-		{	0x54, 0x4f,	0x4e, 0x20	},
-		{	0x77, 0x6e, 0x69, 0x54	},
-		{	0x6f, 0x65, 0x6e, 0x77	},
-		{	0x20, 0x20, 0x65, 0x6f	}
-		};
-	
-	unsigned int key[4][4] = {		// encryption key
-		{	0x54, 0x73,	0x20, 0x67	},
-		{	0x68, 0x20, 0x4b, 0x20	},
-		{	0x61, 0x6d, 0x75, 0x46	},
-		{	0x74, 0x79, 0x6e, 0x75	}
-		};	
-	
-	// we have 10 round, so we need 40 words in array plus 4 for the given key
-	// each word have 4 bytes, so we need 44 * 4 = 176
-	unsigned int w[176];		// all round keys	
-	
-	/*****************************/
-	
-	// print the plaintext and key
-	printf("Plaintext:\n");
-	printArray(state);
-	
-	printf("Key:\n");
-	printArray(key);
+void printArray(unsigned int [][BLOCK_SIZE]);
 
-	// we calculate all round keys 1-10
-	key_schedule(w, key);
-	
-	encryption(state, w);
-	
-	// print the result (ciphertext)
-	printf("\nCiphertext:\n");
-	printArray(state);
-	
-	printf("\n\n--------------------\n\n\n");
-	
-	decryption(state, w);
-	
-	// print the result (plaintext)
-	printf("\nPlaintext:\n");
-	printArray(state);
-	
+void test();
+
+int main(){
+	test();
 	/*
 	int i, j;
 	int row, column;
@@ -226,7 +188,7 @@ return 0;
 }
 
 // this function produces all round keys
-void key_schedule(unsigned int w[], unsigned int key[][4]){
+void key_schedule(unsigned int w[], unsigned int key[][BLOCK_SIZE]){
 	unsigned int row, column;	// row and column for lookup
 	unsigned int temp[4];		// temporary holds the results
 	int i, j, k;				// counters for the loops and used as array "pointers"
@@ -235,9 +197,9 @@ void key_schedule(unsigned int w[], unsigned int key[][4]){
 	// we store it to the first 4 words
 	// w0 w1 w2 w3 || w[0] ... w[15]
 	printf("Round keys:\n");
-  	for(i = 0; i < 4; i++){
+  	for(i = 0; i < BLOCK_SIZE; i++){
   		printf("w[%d] = ", i);
-  		for(j = 0; j < 4; j++){
+  		for(j = 0; j < BLOCK_SIZE; j++){
   			w[(i * 4) + j] = key[j][i];
   			printf("%x ", w[(i * 4) + j]);
 		}
@@ -301,11 +263,11 @@ return;
 }
 
 // this function do result = a XOR b
-void add_roundkey(unsigned int result[][4], unsigned int a[][4], unsigned int b[][4]){
+void add_roundkey(unsigned int result[][BLOCK_SIZE], unsigned int a[][BLOCK_SIZE], unsigned int b[][BLOCK_SIZE]){
 	int i, j;	// counters for the loops
 
-	for(i = 0; i < 4; i++)
-		for(j = 0; j < 4; j++)
+	for(i = 0; i < BLOCK_SIZE; i++)
+		for(j = 0; j < BLOCK_SIZE; j++)
 			result[i][j] = a[i][j] ^ b[i][j];
 	
 return;
@@ -318,7 +280,7 @@ return sBox[row][column];
 
 // this function shifts the rows to the left
 // each row is shifted differently
-void shift_rows(unsigned int state[][4]){
+void shift_rows(unsigned int state[][BLOCK_SIZE]){
 	unsigned int temp;	// temporary variables to do the shifts
 	
 	// first row is not shifted
@@ -353,13 +315,13 @@ return;
 // state column multiplied with mCon row
 // instead of normal multiplication here we do GF(2^8) multiply
 // and instead of addition here we do XOR operation
-void mix_columns(unsigned int result[][4], unsigned int state[][4]){
+void mix_columns(unsigned int result[][BLOCK_SIZE], unsigned int state[][BLOCK_SIZE]){
 	unsigned int sum = 0;	// we hold the sum here
 	int i, j, k;			// counters for the loops
 	
-    for(i = 0; i < 4; i++){
-        for(j = 0; j < 4; j++){
-            for(k = 0; k < 4; k++){
+    for(i = 0; i < BLOCK_SIZE; i++){
+        for(j = 0; j < BLOCK_SIZE; j++){
+            for(k = 0; k < BLOCK_SIZE; k++){
             	sum ^= gfMul(state[k][i], mCon[j][k]);
             }
             result[j][i] = sum;
@@ -371,9 +333,9 @@ return;
 }
 
 // this function encrypts the plaintext 
-void encryption(unsigned int state[][4], unsigned int w[]){
-	unsigned int roundKey[4][4];	// round key
-	unsigned int table[4][4];		// temp array to hold results
+void encryption(unsigned int state[][BLOCK_SIZE], unsigned int w[]){
+	unsigned int roundKey[BLOCK_SIZE][BLOCK_SIZE];	// round key
+	unsigned int table[BLOCK_SIZE][BLOCK_SIZE];		// temp array to hold results
 	
 	unsigned int row, column;	// row and column for sub_bytes lookup
 	int i, j, k;				// counters for the loops
@@ -392,8 +354,8 @@ void encryption(unsigned int state[][4], unsigned int w[]){
   	// 3. mix_columns
   	// 4. add_roundkey
   	for(k = 1; k < 10; k++){
-		for(i = 0; i < 4; i++){
-			for(j = 0; j < 4; j++){
+		for(i = 0; i < BLOCK_SIZE; i++){
+			for(j = 0; j < BLOCK_SIZE; j++){
 				get2Bytes(state[i][j], &row, &column);
 				state[i][j] = sub_byte(row, column);
 			}
@@ -422,8 +384,8 @@ void encryption(unsigned int state[][4], unsigned int w[]){
 	// 1. sub_bytes
 	// 2. shift_rows
 	// 3. add_roundkey
-  	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
+  	for(i = 0; i < BLOCK_SIZE; i++){
+		for(j = 0; j < BLOCK_SIZE; j++){
 			get2Bytes(state[i][j], &row, &column);
 			state[i][j] = sub_byte(row, column);
 		}
@@ -453,7 +415,7 @@ return rsBox[row][column];
 
 // this function shifts the rows to the right
 // each row is shifted differently
-void inv_shift_rows(unsigned int state[][4]){
+void inv_shift_rows(unsigned int state[][BLOCK_SIZE]){
 	unsigned int temp;	// temporary variable to do the shifts
 	
 	// first row is not shifted
@@ -484,14 +446,14 @@ void inv_shift_rows(unsigned int state[][4]){
 return;
 }
 
-void inv_mix_columns(unsigned int result[][4], unsigned int state[][4]){
+void inv_mix_columns(unsigned int result[][BLOCK_SIZE], unsigned int state[][BLOCK_SIZE]){
 	unsigned int sum = 0;	// we hold the sum here
 	int i, j, k;			// counters for the loops
 	unsigned int temp;		// temporary variable to hold the results
 	
-    for(i = 0; i < 4; i++){
-        for(j = 0; j < 4; j++){
-            for(k = 0; k < 4; k++){
+    for(i = 0; i < BLOCK_SIZE; i++){
+        for(j = 0; j < BLOCK_SIZE; j++){
+            for(k = 0; k < BLOCK_SIZE; k++){
             	switch(rmCon[j][k]){
             		// x = state[k][i]
             		case 9:
@@ -514,7 +476,7 @@ void inv_mix_columns(unsigned int result[][4], unsigned int state[][4]){
             			temp ^= state[k][i];			// (x * 2) + x
             			temp = gfMul(temp, 2);			// ((x * 2) + x) * 2
             			temp = gfMul(temp, 2);			// (((x * 2) + x) * 2) * 2
-            			temp ^= state[k][i];			// ((((x * 2) + x) * 2) * 2) + x = x * 11
+            			temp ^= state[k][i];			// ((((x * 2) + x) * 2) * 2) + x = x * 13
             			break;
             			
             		case 14:
@@ -536,9 +498,9 @@ return;
 }
 
 // this function encrypts the plaintext 
-void decryption(unsigned int state[][4], unsigned int w[]){
-	unsigned int roundKey[4][4];	// round key
-	unsigned int table[4][4];		// temp array to hold results
+void decryption(unsigned int state[][BLOCK_SIZE], unsigned int w[]){
+	unsigned int roundKey[BLOCK_SIZE][BLOCK_SIZE];	// round key
+	unsigned int table[BLOCK_SIZE][BLOCK_SIZE];		// temp array to hold results
 	
 	unsigned int row, column;	// row and column for sub_bytes lookup
 	int i, j, k, i1, i2;		// counters for the loops
@@ -558,8 +520,8 @@ void decryption(unsigned int state[][4], unsigned int w[]){
 	printf("inv_shift_rows:\n");  
 	printArray(state);
 	
-  	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
+  	for(i = 0; i < BLOCK_SIZE; i++){
+		for(j = 0; j < BLOCK_SIZE; j++){
 			get2Bytes(state[i][j], &row, &column);
 			state[i][j] = inv_sub_byte(row, column);
 		}
@@ -585,8 +547,8 @@ void decryption(unsigned int state[][4], unsigned int w[]){
 		printf("inv_mix_columns:\n");  
 		printArray(table);
     	
-    	for(i1 = 0; i1 < 4; i1++){
-    		for(i2 = 0; i2 < 4; i2++){
+    	for(i1 = 0; i1 < BLOCK_SIZE; i1++){
+    		for(i2 = 0; i2 < BLOCK_SIZE; i2++){
     			state[i1][i2] = table[i1][i2];
 			}
 		}
@@ -596,8 +558,8 @@ void decryption(unsigned int state[][4], unsigned int w[]){
 		printf("inv_shift_rows:\n");  
 		printArray(state);
     	
-		for(i = 0; i < 4; i++){
-			for(j = 0; j < 4; j++){
+		for(i = 0; i < BLOCK_SIZE; i++){
+			for(j = 0; j < BLOCK_SIZE; j++){
 				get2Bytes(state[i][j], &row, &column);
 				state[i][j] = inv_sub_byte(row, column);
 			}
@@ -683,22 +645,14 @@ return;
 }
 
 // this function return the 16bytes round key
-void getRoundKey(unsigned int w[], unsigned int roundKey[][4], int round){
+void getRoundKey(unsigned int w[], unsigned int roundKey[][BLOCK_SIZE], int round){
 	int i, j;	// counters for the loops
 
-	//printf("Round key %d: ", round);
 	for(i = (round * 4); i < ((round * 4) + 4); i++){
   		for(j = 0; j < 4; j++){
-  		//	if(round == 0){
-		//		roundKey[j][i] = w[(i * 4) + j];
-				//printf("%x ", roundKey[j][i]);
-  		//	}else{
-				roundKey[j][i - (round * 4)] = w[(i * 4) + j];
-				//printf("%x ", roundKey[j][i - (round * 4)]);
-		//	}	
+			roundKey[j][i - (round * 4)] = w[(i * 4) + j];	
 		}
   	}
-  	//printf("\n");
   	
 return;
 }
@@ -734,16 +688,71 @@ unsigned int gfMul(unsigned int a, unsigned int b){
 }
 
 // this function prints the array
-void printArray(unsigned int array[][4]){
+void printArray(unsigned int array[][BLOCK_SIZE]){
 	int i, j;	// counters for the loops
 	
-	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
+	for(i = 0; i < BLOCK_SIZE; i++){
+		for(j = 0; j < BLOCK_SIZE; j++){
 			printf("%x\t", array[i][j]);
 		}
 		printf("\n");
 	}
 	printf("\n");
+	
+return;
+}
+
+void test(){
+	/* temporary array values to test functions
+	 * Plaintext: 	Two One Nine Two = (54 77 6F 20 4F 6E 65 20 4E 69 6E 65 20 54 77 6F)hex
+	 * Key: 		Thats my Kung Fu = (54 68 61 74 73 20 6D 79 20 4B 75 6E 67 20 46 75)hex
+	 * testing encyption and decryption of aes
+	 * we decrypting the output of encryption
+	 */
+	 
+	unsigned int state[BLOCK_SIZE][BLOCK_SIZE] = {	// state array - input
+		{	0x54, 0x4f,	0x4e, 0x20	},
+		{	0x77, 0x6e, 0x69, 0x54	},
+		{	0x6f, 0x65, 0x6e, 0x77	},
+		{	0x20, 0x20, 0x65, 0x6f	}
+		};
+	
+	unsigned int key[BLOCK_SIZE][BLOCK_SIZE] = {		// encryption key
+		{	0x54, 0x73,	0x20, 0x67	},
+		{	0x68, 0x20, 0x4b, 0x20	},
+		{	0x61, 0x6d, 0x75, 0x46	},
+		{	0x74, 0x79, 0x6e, 0x75	}
+		};	
+	
+	// we have 10 round, so we need 40 words in array plus 4 for the given key
+	// each word have 4 bytes, so we need 44 * 4 = 176
+	unsigned int w[176];		// all round keys	
+	
+	/*****************************/
+	
+	// print the plaintext and key
+	printf("Plaintext:\n");
+	printArray(state);
+	
+	printf("Key:\n");
+	printArray(key);
+
+	// we calculate all round keys 1-10
+	key_schedule(w, key);
+	
+	encryption(state, w);
+	
+	// print the result (ciphertext)
+	printf("\nCiphertext:\n");
+	printArray(state);
+	
+	printf("\n\n--------------------\n\n\n");
+	
+	decryption(state, w);
+	
+	// print the result (plaintext)
+	printf("\nPlaintext:\n");
+	printArray(state);
 	
 return;
 }
