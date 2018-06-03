@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// block size is 128 bits = 16 bytes
-// so we need 4x4 blocks
-#define BLOCK_SIZE 4
+#include "aes.h"
 
 // substitute box
 // size 16x16
@@ -66,126 +64,6 @@ const unsigned int rmCon[BLOCK_SIZE][BLOCK_SIZE] = {
   	{	0x0d, 0x09, 0x0e, 0x0b	},
   	{	0x0b, 0x0d, 0x09, 0x0e	}
   	};
-
-// aes functions prototypes	
-void key_schedule(unsigned int [], unsigned int [][BLOCK_SIZE]);
-void add_roundkey(unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE]);
-
-unsigned int sub_byte(unsigned int, unsigned int);
-void shift_rows(unsigned int [][BLOCK_SIZE]);
-void mix_columns(unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE]);
-void encryption(unsigned int [][BLOCK_SIZE], unsigned int []);
-
-unsigned int inv_sub_byte(unsigned int, unsigned int);
-void inv_shift_rows(unsigned int [][BLOCK_SIZE]);
-void inv_mix_columns(unsigned int [][BLOCK_SIZE], unsigned int [][BLOCK_SIZE]);
-void decryption(unsigned int [][BLOCK_SIZE], unsigned int []);
-
-// secondary functions
-int hexCharToDec(char);
-void get2Bytes(unsigned int, unsigned int *, unsigned int *);
-void getRoundKey(unsigned int [], unsigned int [][BLOCK_SIZE], int);
-unsigned int gfMul(unsigned int, unsigned int);
-
-void printArray(unsigned int [][BLOCK_SIZE]);
-
-void test();
-
-int main(){
-	test();
-	/*
-	int i, j;
-	int row, column;
-	unsigned int table[4][4];
-			
-	printArray(state);
-	
-	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
-				get2Bytes(state[i][j], &row, &column);
-				state[i][j] = sub_byte(row, column);
-			}
-	 	}
-
-	printArray(state);
-	
-	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
-				get2Bytes(state[i][j], &row, &column);
-				state[i][j] = inv_sub_byte(row, column);
-			}
-	 	}
-	
-	printArray(state);
-	
-	
-	printArray(state);
-	
-	shift_rows(state);
-	
-	printArray(state);
-	
-	inv_shift_rows(state);
-	
-	printArray(state);
-	
-	
-	printArray(state);
-	
-	mix_columns(table, state);
-	
-	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
-				state[i][j] = table[i][j];
-			}
-	 	}
-	
-	printArray(state);
-	
-	inv_mix_columns(table, state);
-		for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
-				state[i][j] = table[i][j];
-			}
-	 	}
-	printArray(state);	
-	
-	
-	//printf("%s", cipherText);
-	
-  	// mix columns test
-	printf("mix columns:\n");
-	mix_columns(table, state);
-	printArray(table);
-	
-	// get round key test
-	printf("get round key:\n");
-	for(i = 0; i < 11; i++)
-		getRoundKey(w, roundKey, i);
-	
-	// shift row test
-	printf("shift rows:\n");
-	printArray(state);
-	shift_rows(state);
-	printArray(state);
-	
-	// add round key test
-	printf("add round key:\n");
-	add_roundkey(table ,state, roundKey);
-	printArray(table);
-	
-	// sub bytes test
-	printf("sub bytes:\n");
-	for(i = 0; i < 4; i++){
-		for(j = 0; j < 4; j++){
-			get2Bytes(table[i][j], &row, &column);
-			table[i][j] = sub_byte(row, column);
-		}
-	}
-	printArray(table);
-	*/
-return 0;
-}
 
 // this function produces all round keys
 void key_schedule(unsigned int w[], unsigned int key[][BLOCK_SIZE]){
@@ -702,14 +580,12 @@ void printArray(unsigned int array[][BLOCK_SIZE]){
 return;
 }
 
+/* Run the encryption and decryption
+ * Plaintext: 	Two One Nine Two = (54 77 6F 20 4F 6E 65 20 4E 69 6E 65 20 54 77 6F)hex
+ * Key: 		Thats my Kung Fu = (54 68 61 74 73 20 6D 79 20 4B 75 6E 67 20 46 75)hex
+ * we decrypting the output of encryption
+ */
 void test(){
-	/* temporary array values to test functions
-	 * Plaintext: 	Two One Nine Two = (54 77 6F 20 4F 6E 65 20 4E 69 6E 65 20 54 77 6F)hex
-	 * Key: 		Thats my Kung Fu = (54 68 61 74 73 20 6D 79 20 4B 75 6E 67 20 46 75)hex
-	 * testing encyption and decryption of aes
-	 * we decrypting the output of encryption
-	 */
-	 
 	unsigned int state[BLOCK_SIZE][BLOCK_SIZE] = {	// state array - input
 		{	0x54, 0x4f,	0x4e, 0x20	},
 		{	0x77, 0x6e, 0x69, 0x54	},

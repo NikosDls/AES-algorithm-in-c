@@ -1,61 +1,53 @@
 #include <stdio.h>
 #include <string.h>
 
-// AES 128bit = 16 bytes
-#define BYTES 16
+#include "aes.h"
 
-int main(){
-	// last extra byte is for '\0' character
-	unsigned char plainText[BYTES+1];	// plaintext	
-	unsigned char key[BYTES+1];		// encryption key
-	unsigned short int sizeCheck;		// temporary saving the length of plaintext and key
+void readInput(char []);
+void convertStringTo4x4Block(char [], unsigned int [][BLOCK_SIZE]);
+void convert4x4BlockToString(unsigned int [][BLOCK_SIZE], char []);
+
+// this function reads the user input
+void readInput(char input[BYTES+1]){
+	unsigned short int sizeCheck;	// temporary saving the length of given input
 	
-	unsigned int plainTextHEX[BYTES];	// plaintext in hexadecimal
-	unsigned int keyHEX[BYTES];		// key in hexadecimal
-	
-	int i;	// counter for loops
-	
-	// read the text for encryption
+	// read the input
 	do{
-		printf("Text: ");
-		gets(plainText);
+		gets(input);
 		//scanf("%[^\n]s", plainText);
 		
 		// clear the input buffer
 		fflush(stdin);
 		
 		// save the length of plaitext
-		sizeCheck = strlen(plainText);
-	}while(sizeCheck != BYTES);	
+		sizeCheck = strlen(input);
+	}while(sizeCheck != BYTES);
 	
-	// read the key for encryption
-	do{
-		printf("Key: ");
-		gets(key);
-		//scanf("%[^\n]s", key);
-			
-		// clear the input buffer
-		fflush(stdin);
-		
-		// save the length of key
-		sizeCheck = strlen(key);
-	}while(sizeCheck != BYTES);	
+return;
+}
+
+// this function converts string to unsigned int array 4x4
+void convertStringTo4x4Block(char string[BYTES+1], unsigned int block[][BLOCK_SIZE]){
+	int i, j;	// counter for loops
 	
-	// print the plaintext as a string and in hexadecimal form
-	printf("\n%s = ", plainText);
-	for(i = 0; i < BYTES; i++){
-		// saving hexadecimal value to new array
-		plainTextHEX[i] = plainText[i];
-		printf("%x  ", plainTextHEX[i]);
+	for(i = 0; i < BLOCK_SIZE; i++){
+		for(j = 0; j < BLOCK_SIZE; j++){
+			block[j][i] = string[BLOCK_SIZE * i + j]; 
+		}
 	}
 	
-	// print the key as a string and in hexadecimal form
-	printf("\n%s = ", key);
-	for(i = 0; i < BYTES; i++){
-		// saving hexadecimal value to new array
-		keyHEX[i] = key[i];
-		printf("%x  ", keyHEX[i]);
+return;
+}
+
+// this function converts unsigned int array 4x4 to string
+void convert4x4BlockToString(unsigned int block[][BLOCK_SIZE], char string[BYTES+1]){
+	int i, j;	// counter for loops
+	
+	for(i = 0; i < BLOCK_SIZE; i++){
+		for(j = 0; j < BLOCK_SIZE; j++){
+			string[BLOCK_SIZE * i + j] = block[j][i]; 
+		}
 	}
 	
-return 0;
+return;
 }
