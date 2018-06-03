@@ -565,6 +565,32 @@ unsigned int gfMul(unsigned int a, unsigned int b){
 	return r;
 }
 
+// this function converts string to unsigned int array 4x4
+void convertStringToBlock(char string[BYTES+1], unsigned int block[][BLOCK_SIZE]){
+	int i, j;	// counter for loops
+	
+	for(i = 0; i < BLOCK_SIZE; i++){
+		for(j = 0; j < BLOCK_SIZE; j++){
+			block[j][i] = string[BLOCK_SIZE * i + j]; 
+		}
+	}
+	
+return;
+}
+
+// this function converts unsigned int array 4x4 to string
+void convertBlockToString(unsigned int block[][BLOCK_SIZE], char string[BYTES+1]){
+	int i, j;	// counter for loops
+	
+	for(i = 0; i < BLOCK_SIZE; i++){
+		for(j = 0; j < BLOCK_SIZE; j++){
+			string[BLOCK_SIZE * i + j] = block[j][i]; 
+		}
+	}
+	
+return;
+}
+
 // this function prints the array
 void printArray(unsigned int array[][BLOCK_SIZE]){
 	int i, j;	// counters for the loops

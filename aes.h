@@ -27,6 +27,8 @@ int hexCharToDec(char);
 void get2Bytes(unsigned int, unsigned int *, unsigned int *);
 void getRoundKey(unsigned int [], unsigned int [][BLOCK_SIZE], int);
 unsigned int gfMul(unsigned int, unsigned int);
+void convertStringToBlock(char [], unsigned int [][BLOCK_SIZE]);
+void convertBlockToString(unsigned int [][BLOCK_SIZE], char []);
 
 void printArray(unsigned int [][BLOCK_SIZE]);
 

@@ -8,7 +8,7 @@ int main(){
 	unsigned char plainText[BYTES+1];	// plaintext	
 	unsigned char cipherText[BYTES+1];	// ciphertext
 	unsigned char key[BYTES+1];			// encryption key
-	unsigned char output[BYTES+1];		// strign to prints the results
+	unsigned char output[BYTES+1];		// string to prints the results
 	
 	int answer;		// user answer
 	
@@ -38,8 +38,8 @@ int main(){
 			readInput(key);
 			
 			// convert plaintext and key to 4x4 blocks
-			convertStringTo4x4Block(plainText, state4x4);
-			convertStringTo4x4Block(key, key4x4);
+			convertStringToBlock(plainText, state4x4);
+			convertStringToBlock(key, key4x4);
 			
 			// we calculate all round keys 1-10
 			key_schedule(w, key4x4);
@@ -48,7 +48,7 @@ int main(){
 			encryption(state4x4, w);
 			
 			// print the output to user as string
-			convert4x4BlockToString(state4x4, output);
+			convertBlockToString(state4x4, output);
 			output[BYTES] = '\0';
 			printf("Ciphertext: %s", output);
 			break;
@@ -63,8 +63,8 @@ int main(){
 			readInput(key);
 			
 			// convert ciphertext and key to 4x4 blocks
-			convertStringTo4x4Block(cipherText, state4x4);
-			convertStringTo4x4Block(key, key4x4);
+			convertStringToBlock(cipherText, state4x4);
+			convertStringToBlock(key, key4x4);
 			
 			// we calculate all round keys 1-10
 			key_schedule(w, key4x4);
@@ -73,7 +73,7 @@ int main(){
 			decryption(state4x4, w);
 			
 			// print the output to user as string
-			convert4x4BlockToString(state4x4, output);
+			convertBlockToString(state4x4, output);
 			output[BYTES] = '\0';
 			printf("Plaintext: %s", output);
 			break;
@@ -88,18 +88,18 @@ int main(){
 			readInput(key);
 			
 			// convert plaintext and key to 4x4 blocks
-			convertStringTo4x4Block(plainText, state4x4);
-			convertStringTo4x4Block(key, key4x4);
+			convertStringToBlock(plainText, state4x4);
+			convertStringToBlock(key, key4x4);
 			
 			// we calculate all round keys 1-10
 			key_schedule(w, key4x4);
 			
-			printf("ENCRYPTION\n");
+			printf("\nENCRYPTION\n");
 			// encrypt the plaintext
 			encryption(state4x4, w);
 			
 			// print the output to user as string
-			convert4x4BlockToString(state4x4, output);
+			convertBlockToString(state4x4, output);
 			output[BYTES] = '\0';
 			printf("Ciphertext: %s\n", output);
 			printf("END OF ENCRYPTION\n");
@@ -109,7 +109,7 @@ int main(){
 			decryption(state4x4, w);
 			
 			// print the output to user as string
-			convert4x4BlockToString(state4x4, output);
+			convertBlockToString(state4x4, output);
 			output[BYTES] = '\0';
 			printf("Plaintext: %s\n", output);
 			printf("END OF DECRYPTION\n");
