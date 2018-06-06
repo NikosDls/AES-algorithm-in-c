@@ -7,17 +7,17 @@ int main(){
 	// last extra byte is for '\0' character
 	unsigned char plainText[BYTES+1];	// plaintext	
 	unsigned char cipherText[BYTES+1];	// ciphertext
-	unsigned char key[BYTES+1];			// encryption key
+	unsigned char key[BYTES+1];		// encryption key
 	unsigned char output[BYTES+1];		// string to prints the results
 	
-	int answer;		// user answer
+	int answer;	// user answer
 	
 	unsigned int state4x4[BLOCK_SIZE][BLOCK_SIZE];	// input
 	unsigned int key4x4[BLOCK_SIZE][BLOCK_SIZE];	// encryption or decryption key
 	
 	// we have 10 round, so we need 40 words in array plus 4 for the given key
 	// each word have 4 bytes, so we need 44 * 4 = 176
-	unsigned int w[176];		// all round keys	
+	unsigned int w[176];	// all round keys	
 	
 	// print the menu to user and read the answer
 	printf("-----------------------\n1. Encryption\n2. Decryption\n3. Encrypt and Decrypt\n4. Run example\n-----------------------\n");
@@ -37,7 +37,7 @@ int main(){
 			printf("Key: ");
 			readInput(key);
 			
-			// convert plaintext and key to 4x4 blocks
+			// convert plaintext and key to 4x4 block
 			convertStringToBlock(plainText, state4x4);
 			convertStringToBlock(key, key4x4);
 			
@@ -62,7 +62,7 @@ int main(){
 			printf("Key: ");
 			readInput(key);
 			
-			// convert ciphertext and key to 4x4 blocks
+			// convert ciphertext and key to 4x4 block
 			convertStringToBlock(cipherText, state4x4);
 			convertStringToBlock(key, key4x4);
 			
@@ -87,7 +87,7 @@ int main(){
 			printf("Key: ");
 			readInput(key);
 			
-			// convert plaintext and key to 4x4 blocks
+			// convert plaintext and key to 4x4 block
 			convertStringToBlock(plainText, state4x4);
 			convertStringToBlock(key, key4x4);
 			
