@@ -539,20 +539,20 @@ return;
 // polynomial: x^8 + x^4 + x^3 + x + 1
 // binary: 00011011  || hex: 0x1b
 unsigned int gfMul(unsigned int a, unsigned int b){
-    unsigned int r = 0;			// result
-    unsigned int hi_bit_set;	// high bit (leftmost)
+	unsigned int r = 0;			// result
+	unsigned int hi_bit_set;	// high bit (leftmost)
 	int i;						// counter for the loop
 	
-    for(i = 0; i < 8; i++) {
-        if(b & 1) 
+	for(i = 0; i < 8; i++) {
+    	if(b & 1) 
         	r ^= a;
-        hi_bit_set = (a & 0x80);
-        a <<= 1;
+    	hi_bit_set = (a & 0x80);
+    	a <<= 1;
         
 		if(hi_bit_set) 
-            a ^= 0x1b;	// x^8 + x^4 + x^3 + x + 1
-        b >>= 1;
-    }
+        	a ^= 0x1b;	// x^8 + x^4 + x^3 + x + 1
+    	b >>= 1;
+	}
     
 	// if result legnth is more than 8 bits
 	if(r > 255 && r < 512)
@@ -612,14 +612,14 @@ return;
  * we decrypting the output of encryption
  */
 void test(){
-	unsigned int state[BLOCK_SIZE][BLOCK_SIZE] = {	// state array - input
+	unsigned int state[BLOCK_SIZE][BLOCK_SIZE] = {	// input
 		{	0x54, 0x4f,	0x4e, 0x20	},
 		{	0x77, 0x6e, 0x69, 0x54	},
 		{	0x6f, 0x65, 0x6e, 0x77	},
 		{	0x20, 0x20, 0x65, 0x6f	}
 		};
 	
-	unsigned int key[BLOCK_SIZE][BLOCK_SIZE] = {		// encryption key
+	unsigned int key[BLOCK_SIZE][BLOCK_SIZE] = {	// encryption key
 		{	0x54, 0x73,	0x20, 0x67	},
 		{	0x68, 0x20, 0x4b, 0x20	},
 		{	0x61, 0x6d, 0x75, 0x46	},
