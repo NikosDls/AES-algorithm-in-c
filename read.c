@@ -9,10 +9,9 @@ void readInput(char []);
 void readInput(char input[BYTES+1]){
 	unsigned short int sizeCheck;	// temporary saving the length of given input
 	
-	// read the input
 	do{
+		// read the input
 		gets(input);
-		//scanf("%[^\n]s", plainText);
 		
 		// clear the input buffer
 		fflush(stdin);
