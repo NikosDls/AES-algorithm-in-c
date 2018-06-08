@@ -16,7 +16,7 @@ void readInput(char input[BYTES+1]){
 		// clear the input buffer
 		fflush(stdin);
 		
-		// save the length of plaitext
+		// save the length of input
 		sizeCheck = strlen(input);
 	}while(sizeCheck != BYTES);
 	
